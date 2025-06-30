@@ -1,0 +1,65 @@
+# STEP 1: INSTALL LIBRARY
+# Only run once in a new environment
+!pip install scikit-surprise
+
+# STEP 2: IMPORT LIBRARIES
+from surprise import SVD, Dataset, Reader, accuracy
+from surprise.model_selection import train_test_split, cross_validate
+from collections import defaultdict
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# STEP 3: LOAD DATASET (MOVIELENS 100K)
+data = Dataset.load_builtin('ml-100k')
+
+# STEP 4: SPLIT DATA INTO TRAIN AND TEST SET
+trainset, testset = train_test_split(data, test_size=0.25, random_state=42)
+
+# STEP 5: BUILD AND TRAIN THE SVD MODEL
+algo = SVD()
+algo.fit(trainset)
+
+# STEP 6: MAKE PREDICTIONS ON TEST SET
+predictions = algo.test(testset)
+
+# STEP 7: EVALUATE MODEL PERFORMANCE
+rmse = accuracy.rmse(predictions)
+mae = accuracy.mae(predictions)
+
+# STEP 8: CROSS VALIDATION METRICS
+print("\n Performing 3-Fold Cross Validation:")
+cross_validate(algo, data, measures=['RMSE', 'MAE'], cv=3, verbose=True)
+
+# STEP 9: FUNCTION TO GET TOP-N RECOMMENDATIONS
+def get_top_n(predictions, n=5):
+    top_n = defaultdict(list)
+    for uid, iid, true_r, est, _ in predictions:
+        top_n[uid].append((iid, est))
+    for uid, user_ratings in top_n.items():
+        user_ratings.sort(key=lambda x: x[1], reverse=True)
+        top_n[uid] = user_ratings[:n]
+    return top_n
+
+top_n = get_top_n(predictions, n=5)
+
+# STEP 10: DISPLAY TOP RECOMMENDATIONS FOR ONE USER
+print("\n Top 5 Recommendations for User 196:")
+for uid, user_ratings in top_n.items():
+    print(f"\nUser {uid}:")
+    for (iid, est_rating) in user_ratings:
+        print(f"   Item {iid} — Predicted Rating: {est_rating:.2f}")
+    break
+
+# STEP 11: VISUALIZE PREDICTED VS TRUE RATINGS (First 100 Samples)
+true_ratings = [pred.r_ui for pred in predictions[:100]]
+pred_ratings = [pred.est for pred in predictions[:100]]
+
+plt.figure(figsize=(10, 5))
+plt.plot(true_ratings, label="True Ratings", marker='o')
+plt.plot(pred_ratings, label="Predicted Ratings", marker='x')
+plt.title("True vs Predicted Ratings (Sample of 100)")
+plt.xlabel("Sample Index")
+plt.ylabel("Rating")
+plt.legend()
+plt.grid(True)
+plt.show()
