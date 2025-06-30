@@ -14,4 +14,8 @@ MENTOR:NEELA SANTOSH
 
 **This system uses **Matrix Factorization (SVD)** to predict user ratings for items based on past interactions. It evaluates the model using **RMSE and MAE** and provides top-N personalized recommendations for each user**
 
+OUTPUT:
+
+![Image](https://github.com/user-attachments/assets/eba3d721-7adc-41e6-aaa1-450bb25520f8)
+
 
